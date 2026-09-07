@@ -6,10 +6,12 @@ data class CarMake(
     val id: Long,
     val name: String,
     val isEdited: Boolean,
+    val isDeleted: Boolean
 )
 
 fun CarMakeEntity.toCarMake() = CarMake(
     id = localId,
     name = name,
     isEdited = isEdited,
+    isDeleted = isDeleted
 )

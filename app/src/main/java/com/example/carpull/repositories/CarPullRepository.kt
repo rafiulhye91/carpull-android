@@ -16,6 +16,7 @@ import javax.inject.Inject
 interface ICarPullRepository {
     suspend fun getAllMakes(): Flow<Resource<List<CarMake>>>
     suspend fun refreshMakes(): Flow<Resource<Int>>
+    fun deleteCarMake(carMake: CarMake)
 }
 
 class CarPullRepository @Inject constructor(
@@ -49,6 +50,10 @@ class CarPullRepository @Inject constructor(
         emit(Resource.Success(rowIds.count { it != -1L }))
     }.catch { e ->
         emit(Resource.Error(error = "Failed to refresh: ${e.message}"))
+    }
+
+    override fun deleteCarMake(carMake: CarMake) {
+
     }
 
 }
