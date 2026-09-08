@@ -9,6 +9,7 @@ import com.example.carpull.data.local.entity.toEntity
 import com.example.carpull.data.remote.ApiServices
 import com.example.carpull.presentation.model.CarMake
 import com.example.carpull.presentation.model.CarModel
+import com.example.carpull.presentation.model.SortOrder
 import com.example.carpull.presentation.model.toCarMake
 import com.example.carpull.presentation.model.toCarModel
 import kotlinx.coroutines.flow.Flow
@@ -19,7 +20,7 @@ import javax.inject.Inject
 import kotlin.coroutines.cancellation.CancellationException
 
 interface ICarPullRepository {
-    suspend fun getAllMakesFromLocal(): Flow<Resource<List<CarMake>>>
+    suspend fun getAllMakesFromLocal(sortOrder: SortOrder): Flow<Resource<List<CarMake>>>
     suspend fun getAllMakesFromRemote(): Flow<Resource<Int>>
     suspend fun deleteCarMake(carMake: CarMake): Resource<Int>
     suspend fun getCarMake(localId: Long): Resource<CarMake>
@@ -39,8 +40,13 @@ class CarPullRepository @Inject constructor(
     private val dao: AppDao
 ) : ICarPullRepository {
 
-    override suspend fun getAllMakesFromLocal(): Flow<Resource<List<CarMake>>> {
-        return dao.getAllMakes()
+    override suspend fun getAllMakesFromLocal(sortOrder: SortOrder): Flow<Resource<List<CarMake>>> {
+        val source = when (sortOrder) {
+            SortOrder.NameAsc -> dao.getAllMakesByNameAsc()
+            SortOrder.NameDesc -> dao.getAllMakesByNameDesc()
+            SortOrder.LastEdited -> dao.getAllMakesByLastEdited()
+        }
+        return source
             .map<List<CarMakeEntity>, Resource<List<CarMake>>> { it -> Success(it.map { it.toCarMake() }) }
             .catch { e ->
                 emit(Error(error = "Couldn't read local data: ${e.message}"))
