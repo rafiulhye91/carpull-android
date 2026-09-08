@@ -9,13 +9,18 @@ import com.example.carpull.repositories.ICarPullRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 interface ICarMakeViewModel {
     fun onItemDelete(carMake: CarMake)
     fun onSortOrderChange(sortOrder: SortOrder)
+    fun onQueryChange(query: String)
 }
 
 @HiltViewModel
@@ -28,8 +33,16 @@ class CarMakeViewModel @Inject constructor(private val repository: ICarPullRepos
     private val _errorState = MutableStateFlow<String?>(null)
     val errorState = _errorState.asStateFlow()
 
-    private val _carMakes = MutableStateFlow<List<CarMake>>(emptyList())
-    val carMakes = _carMakes.asStateFlow()
+    private val _allCarMakes = MutableStateFlow<List<CarMake>>(emptyList())
+
+    private val _query = MutableStateFlow("")
+    val query = _query.asStateFlow()
+
+    val carMakes: StateFlow<List<CarMake>> =
+        combine(_allCarMakes, _query) { makes, query ->
+            if (query.isBlank()) makes
+            else makes.filter { it.name.contains(query.trim(), ignoreCase = true) }
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     private val _sortOrder = MutableStateFlow(SortOrder.NameAsc)
     val sortOrder = _sortOrder.asStateFlow()
@@ -65,7 +78,7 @@ class CarMakeViewModel @Inject constructor(private val repository: ICarPullRepos
                             refreshAllMakes()
                             return@collect
                         }
-                        _carMakes.value = makes
+                        _allCarMakes.value = makes
                     }
                 }
             }
@@ -100,6 +113,10 @@ class CarMakeViewModel @Inject constructor(private val repository: ICarPullRepos
         if (_sortOrder.value == sortOrder) return
         _sortOrder.value = sortOrder
         getAllMakes()
+    }
+
+    override fun onQueryChange(query: String) {
+        _query.value = query
     }
 
     override fun onItemDelete(carMake: CarMake) {
