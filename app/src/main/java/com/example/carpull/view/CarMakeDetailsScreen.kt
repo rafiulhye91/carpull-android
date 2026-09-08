@@ -57,6 +57,32 @@ fun CarMakeDetailsScreen(
                 )
             }
             HorizontalDivider()
+
+            val notes = viewModel.carMake.notes
+            if (!notes.isNullOrBlank()) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                ) {
+                    Text(
+                        text = "Notes",
+                        style = MaterialTheme.typography.titleMedium,
+                    )
+                    Text(
+                        text = notes,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        // Capped so a long note can't push the models list off
+                        // screen -- this Column doesn't scroll.
+                        maxLines = 4,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.padding(top = 4.dp),
+                    )
+                }
+                HorizontalDivider()
+            }
+
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
