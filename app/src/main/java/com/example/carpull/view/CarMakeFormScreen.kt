@@ -87,7 +87,7 @@ fun CarMakeFormScreen(
                         value = state.name,
                         onValueChange = viewModel::onNameChange,
                         label = { Text("Name") },
-                        isError = state.name.isBlank(),
+                        isError = state.hasAttemptedSave && state.name.isBlank(),
                         singleLine = true,
                         supportingText = state.originalName?.let { { Text("vPIC name: $it") } },
                         modifier = Modifier

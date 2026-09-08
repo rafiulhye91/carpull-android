@@ -9,4 +9,5 @@ data class CarMakeForm(
     val existingModels: List<CarModel> = emptyList(),
     val newModelNames: List<String> = emptyList(),
     val modelDraft: String = "",
+    val hasAttemptedSave: Boolean = false,
 )

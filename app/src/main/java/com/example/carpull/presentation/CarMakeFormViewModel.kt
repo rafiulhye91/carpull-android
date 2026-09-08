@@ -128,6 +128,7 @@ class CarMakeFormViewModel @Inject constructor(
     override fun onSave() {
         val form = _form.value
         if (form.name.isBlank()) {
+            _form.value = form.copy(hasAttemptedSave = true)
             _errorState.value = "Name can't be empty"
             return
         }

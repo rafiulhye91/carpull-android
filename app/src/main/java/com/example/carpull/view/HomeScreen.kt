@@ -2,6 +2,12 @@ package com.example.carpull.view
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
@@ -16,27 +22,40 @@ import com.example.carpull.view.components.LoadingDialog
 fun HomeScreen(
     onMakeClick: (CarMake) -> Unit,
     onEditClick: (CarMake) -> Unit,
+    onAddClick: () -> Unit,
     viewModel: CarMakeViewModel = hiltViewModel(),
 ) {
     val carMakes = viewModel.carMakes.collectAsState()
     val isLoading = viewModel.loadingState.collectAsState()
     val error = viewModel.errorState.collectAsState()
 
-
-    Box(Modifier.fillMaxSize()) {
-        CarMakeList(
-            carMakes = carMakes.value,
-            viewModel = viewModel,
-            onMakeClick = onMakeClick,
-            onEditClick = onEditClick,
-        )
-
-        if (isLoading.value) {
-            LoadingDialog()
+    Scaffold(
+        floatingActionButton = {
+            FloatingActionButton(onClick = onAddClick) {
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = "Add make",
+                )
+            }
         }
+    ) { innerPadding ->
+        Box(Modifier.fillMaxSize()) {
+            CarMakeList(
+                carMakes = carMakes.value,
+                viewModel = viewModel,
+                onMakeClick = onMakeClick,
+                onEditClick = onEditClick,
+                modifier = Modifier
+                    .padding(innerPadding)
+            )
 
-        error.value?.let { message ->
-            ErrorDialog(errorMsg = message)
+            if (isLoading.value) {
+                LoadingDialog()
+            }
+
+            error.value?.let { message ->
+                ErrorDialog(errorMsg = message)
+            }
         }
     }
 }

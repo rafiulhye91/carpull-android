@@ -26,6 +26,9 @@ fun AppNavigation() {
                 onEditClick = { carMake ->
                     navController.navigate(CarMakeFormRoute(carMake.id))
                 },
+                onAddClick = {
+                    navController.navigate(CarMakeFormRoute())
+                },
             )
         }
 
