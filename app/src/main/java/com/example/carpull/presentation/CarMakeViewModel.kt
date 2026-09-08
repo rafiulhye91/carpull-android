@@ -81,7 +81,6 @@ class CarMakeViewModel @Inject constructor(private val repository: ICarPullRepos
                     is Resource.Success -> {
                         _loadingState.value = false
                         _errorState.value = null
-
                     }
                 }
             }
@@ -89,11 +88,13 @@ class CarMakeViewModel @Inject constructor(private val repository: ICarPullRepos
     }
 
     override fun onItemEdit(carMake: CarMake) {
-        TODO("Not yet implemented")
+        Log.d("CarMakeViewModel", "onItemEdit: $carMake")
     }
 
     override fun onItemDelete(carMake: CarMake) {
-        repository.deleteCarMake(carMake)
+        viewModelScope.launch {
+            repository.deleteCarMake(carMake)
+        }
     }
 
 }

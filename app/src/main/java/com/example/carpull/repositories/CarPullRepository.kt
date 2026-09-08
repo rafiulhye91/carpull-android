@@ -12,11 +12,12 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
+import kotlin.coroutines.cancellation.CancellationException
 
 interface ICarPullRepository {
     suspend fun getAllMakes(): Flow<Resource<List<CarMake>>>
     suspend fun refreshMakes(): Flow<Resource<Int>>
-    fun deleteCarMake(carMake: CarMake)
+    suspend fun deleteCarMake(carMake: CarMake): Resource<Int>
 }
 
 class CarPullRepository @Inject constructor(
@@ -52,8 +53,22 @@ class CarPullRepository @Inject constructor(
         emit(Resource.Error(error = "Failed to refresh: ${e.message}"))
     }
 
-    override fun deleteCarMake(carMake: CarMake) {
-
+    override suspend fun deleteCarMake(carMake: CarMake): Resource<Int> {
+        return try {
+            val updated = dao.softDeleteMake(
+                localId = carMake.id,
+                updatedAt = System.currentTimeMillis(),
+            )
+            if (updated == 0) {
+                Resource.Error(error = "Couldn't find that make")
+            } else {
+                Resource.Success(updated)
+            }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Resource.Error(error = "Failed to delete: ${e.message}")
+        }
     }
 
 }

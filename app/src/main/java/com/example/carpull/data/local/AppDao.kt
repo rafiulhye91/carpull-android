@@ -14,4 +14,7 @@ interface AppDao {
 
     @Query("SELECT * FROM makes WHERE isDeleted = 0 ORDER BY name COLLATE NOCASE ASC")
     fun getAllMakes(): Flow<List<CarMakeEntity>>
+
+    @Query("UPDATE makes SET isDeleted = 1, updatedAt = :updatedAt WHERE localId = :localId")
+    suspend fun softDeleteMake(localId: Long, updatedAt: Long): Int
 }
