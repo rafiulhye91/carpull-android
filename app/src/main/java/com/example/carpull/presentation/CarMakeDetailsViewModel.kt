@@ -1,6 +1,5 @@
 package com.example.carpull.presentation
 
-import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -38,16 +37,12 @@ class CarMakeDetailsViewModel @Inject constructor(
     private var hasRequestedRefresh = false
 
     init {
-        if (carMake.remoteId == null) {
-            _errorState.value = "${carMake.name} has no remote id to look up"
-        } else {
-            getAllModels(carMake.remoteId)
-        }
+        getAllModels()
     }
 
-    private fun getAllModels(remoteId: Int) {
+    private fun getAllModels() {
         viewModelScope.launch {
-            repository.getAllModelsFromLocal(remoteId).collect { resource ->
+            repository.getAllModelsFromLocal(carMake.id).collect { resource ->
                 when (resource) {
                     is Resource.Error -> {
                         _loadingState.value = false
@@ -63,13 +58,13 @@ class CarMakeDetailsViewModel @Inject constructor(
                         _loadingState.value = false
                         _errorState.value = null
                         val models = resource.data.orEmpty()
-                        if (models.isEmpty() && !hasRequestedRefresh) {
+                        val remoteId = carMake.remoteId
+                        if (models.isEmpty() && remoteId != null && !hasRequestedRefresh) {
                             hasRequestedRefresh = true
                             refreshAllModels(remoteId)
                             return@collect
                         }
                         _carModels.value = models
-                        Log.d("rafi", "getAllModels: ${resource.data}")
                     }
                 }
             }
@@ -78,7 +73,7 @@ class CarMakeDetailsViewModel @Inject constructor(
 
     private fun refreshAllModels(remoteId: Int) {
         viewModelScope.launch {
-            repository.getAllModelsFromRemote(remoteId).collect { resource ->
+            repository.getAllModelsFromRemote(carMake.id, remoteId).collect { resource ->
                 when (resource) {
                     is Resource.Error -> {
                         _loadingState.value = false
@@ -93,7 +88,6 @@ class CarMakeDetailsViewModel @Inject constructor(
                     is Resource.Success -> {
                         _loadingState.value = false
                         _errorState.value = null
-                        Log.d("rafi", "refreshAllModels: ${resource.data}")
                     }
                 }
             }

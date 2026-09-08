@@ -6,8 +6,10 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.carpull.presentation.model.CarMake
 import com.example.carpull.view.CarMakeDetailsScreen
+import com.example.carpull.view.CarMakeFormScreen
 import com.example.carpull.view.HomeScreen
 import com.example.carpull.view.navigation.Routes.HOME
+import kotlinx.serialization.Serializable
 
 
 @Composable
@@ -20,12 +22,21 @@ fun AppNavigation() {
             HomeScreen(
                 onMakeClick = { carMake ->
                     navController.navigate(carMake)
-                }
+                },
+                onEditClick = { carMake ->
+                    navController.navigate(CarMakeFormRoute(carMake.id))
+                },
             )
         }
 
         composable<CarMake> {
             CarMakeDetailsScreen(
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable<CarMakeFormRoute> {
+            CarMakeFormScreen(
                 onBack = { navController.popBackStack() }
             )
         }
@@ -35,3 +46,6 @@ fun AppNavigation() {
 object Routes {
     const val HOME = "home"
 }
+
+@Serializable
+data class CarMakeFormRoute(val localId: Long? = null)

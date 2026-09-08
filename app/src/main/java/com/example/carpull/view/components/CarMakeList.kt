@@ -12,6 +12,7 @@ import com.example.carpull.presentation.model.CarMake
 fun CarMakeList(
     carMakes: List<CarMake>,
     onMakeClick: (CarMake) -> Unit,
+    onEditClick: (CarMake) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: CarMakeViewModel,
 ) {
@@ -23,7 +24,7 @@ fun CarMakeList(
             SwipeableRowItem(
                 carMake = carMake,
                 onClick = { onMakeClick(carMake) },
-                onEdit = {viewModel.onItemEdit(carMake)},
+                onEdit = { onEditClick(carMake) },
                 onDelete = {viewModel.onItemDelete(carMake)},
             )
             HorizontalDivider()

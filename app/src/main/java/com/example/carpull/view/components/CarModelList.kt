@@ -24,7 +24,7 @@ fun CarModelList(
     LazyColumn(modifier = modifier) {
         items(
             items = carModels,
-            key = { it.modelId },
+            key = { it.id },
         ) { carModel ->
             CarModelRow(carModel = carModel)
             HorizontalDivider()

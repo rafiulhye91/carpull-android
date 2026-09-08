@@ -8,19 +8,23 @@ import com.example.carpull.data.remote.model.ModelInfoDTO
 @Entity(
     tableName = "models",
     indices = [
-        Index(value = ["makeRemoteId"]),
-        Index(value = ["modelId"], unique = true)
+        Index(value = ["makeLocalId"]),
+        Index(value = ["remoteId"], unique = true),
     ]
 )
 data class CarModelEntity(
-    @PrimaryKey val modelId: Int,
-    val makeRemoteId: Int,
+    @PrimaryKey(autoGenerate = true) val localId: Long = 0,
+    val remoteId: Int? = null,
+    val makeLocalId: Long,
     val name: String,
+    val isEdited: Boolean = false,
+    val isDeleted: Boolean = false,
+    val updatedAt: Long = System.currentTimeMillis(),
     val fetchedAt: Long = System.currentTimeMillis()
 )
 
-fun ModelInfoDTO.toEntity() = CarModelEntity(
-    modelId = modelId,
-    makeRemoteId = makeId,
+fun ModelInfoDTO.toEntity(makeLocalId: Long) = CarModelEntity(
+    remoteId = modelId,
+    makeLocalId = makeLocalId,
     name = modelName
 )

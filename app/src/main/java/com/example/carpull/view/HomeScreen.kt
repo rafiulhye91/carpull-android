@@ -15,6 +15,7 @@ import com.example.carpull.view.components.LoadingDialog
 @Composable
 fun HomeScreen(
     onMakeClick: (CarMake) -> Unit,
+    onEditClick: (CarMake) -> Unit,
     viewModel: CarMakeViewModel = hiltViewModel(),
 ) {
     val carMakes = viewModel.carMakes.collectAsState()
@@ -27,6 +28,7 @@ fun HomeScreen(
             carMakes = carMakes.value,
             viewModel = viewModel,
             onMakeClick = onMakeClick,
+            onEditClick = onEditClick,
         )
 
         if (isLoading.value) {

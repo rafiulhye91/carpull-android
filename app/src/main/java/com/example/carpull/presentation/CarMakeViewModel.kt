@@ -1,6 +1,5 @@
 package com.example.carpull.presentation
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.carpull.data.Resource
@@ -13,7 +12,6 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 interface ICarMakeViewModel {
-    fun onItemEdit(carMake: CarMake)
     fun onItemDelete(carMake: CarMake)
 }
 
@@ -85,10 +83,6 @@ class CarMakeViewModel @Inject constructor(private val repository: ICarPullRepos
                 }
             }
         }
-    }
-
-    override fun onItemEdit(carMake: CarMake) {
-        Log.d("CarMakeViewModel", "onItemEdit: $carMake")
     }
 
     override fun onItemDelete(carMake: CarMake) {
