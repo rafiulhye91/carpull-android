@@ -3,6 +3,7 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose")
     id("com.google.devtools.ksp")
     id("com.google.dagger.hilt.android")
+    id("org.jetbrains.kotlin.plugin.serialization")
 }
 
 android {
@@ -78,4 +79,5 @@ dependencies {
     ksp("androidx.room:room-compiler:2.8.4")
     implementation("androidx.compose.material:material-icons-extended")
     implementation("androidx.hilt:hilt-navigation-compose:1.4.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.1")
 }

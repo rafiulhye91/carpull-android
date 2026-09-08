@@ -1,12 +1,16 @@
 package com.example.carpull.repositories
 
 import com.example.carpull.data.Resource
+import com.example.carpull.data.Resource.*
 import com.example.carpull.data.local.AppDao
 import com.example.carpull.data.local.entity.CarMakeEntity
+import com.example.carpull.data.local.entity.CarModelEntity
 import com.example.carpull.data.local.entity.toEntity
 import com.example.carpull.data.remote.ApiServices
 import com.example.carpull.presentation.model.CarMake
+import com.example.carpull.presentation.model.CarModel
 import com.example.carpull.presentation.model.toCarMake
+import com.example.carpull.presentation.model.toCarModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flow
@@ -15,9 +19,11 @@ import javax.inject.Inject
 import kotlin.coroutines.cancellation.CancellationException
 
 interface ICarPullRepository {
-    suspend fun getAllMakes(): Flow<Resource<List<CarMake>>>
-    suspend fun refreshMakes(): Flow<Resource<Int>>
+    suspend fun getAllMakesFromLocal(): Flow<Resource<List<CarMake>>>
+    suspend fun getAllMakesFromRemote(): Flow<Resource<Int>>
     suspend fun deleteCarMake(carMake: CarMake): Resource<Int>
+    suspend fun getAllModelsFromLocal(remoteId: Int): Flow<Resource<List<CarModel>>>
+    suspend fun getAllModelsFromRemote(remoteId: Int): Flow<Resource<Int>>
 }
 
 class CarPullRepository @Inject constructor(
@@ -25,32 +31,32 @@ class CarPullRepository @Inject constructor(
     private val dao: AppDao
 ) : ICarPullRepository {
 
-    override suspend fun getAllMakes(): Flow<Resource<List<CarMake>>> {
+    override suspend fun getAllMakesFromLocal(): Flow<Resource<List<CarMake>>> {
         return dao.getAllMakes()
-            .map<List<CarMakeEntity>, Resource<List<CarMake>>> { it -> Resource.Success(it.map { it.toCarMake() }) }
+            .map<List<CarMakeEntity>, Resource<List<CarMake>>> { it -> Success(it.map { it.toCarMake() }) }
             .catch { e ->
-                emit(Resource.Error(error = "Couldn't read local data: ${e.message}"))
+                emit(Error(error = "Couldn't read local data: ${e.message}"))
             }
     }
 
-    override suspend fun refreshMakes(): Flow<Resource<Int>> = flow {
-        emit(Resource.Loading())
+    override suspend fun getAllMakesFromRemote(): Flow<Resource<Int>> = flow {
+        emit(Loading())
 
         val response = api.getAllMakes()
         if (!response.isSuccessful) {
-            emit(Resource.Error(error = "Server error (HTTP ${response.code()})"))
+            emit(Error(error = "Server error (HTTP ${response.code()})"))
             return@flow
         }
 
         val makes = response.body()?.makeInfoList.orEmpty()
         if (makes.isEmpty()) {
-            emit(Resource.Error(error = "API returned no makes"))
+            emit(Error(error = "API returned no makes"))
             return@flow
         }
         val rowIds = dao.insertAllMakes(makes.map { it.toEntity() })
-        emit(Resource.Success(rowIds.count { it != -1L }))
+        emit(Success(rowIds.count { it != -1L }))
     }.catch { e ->
-        emit(Resource.Error(error = "Failed to refresh: ${e.message}"))
+        emit(Error(error = "Failed to refresh: ${e.message}"))
     }
 
     override suspend fun deleteCarMake(carMake: CarMake): Resource<Int> {
@@ -60,15 +66,41 @@ class CarPullRepository @Inject constructor(
                 updatedAt = System.currentTimeMillis(),
             )
             if (updated == 0) {
-                Resource.Error(error = "Couldn't find that make")
+                Error(error = "Couldn't find that make")
             } else {
-                Resource.Success(updated)
+                Success(updated)
             }
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            Resource.Error(error = "Failed to delete: ${e.message}")
+            Error(error = "Failed to delete: ${e.message}")
         }
+    }
+
+    override suspend fun getAllModelsFromLocal(remoteId: Int): Flow<Resource<List<CarModel>>> {
+        return dao.getModelsForMake(remoteId)
+            .map<List<CarModelEntity>, Resource<List<CarModel>>> { it -> Success(it.map { it.toCarModel() }) }
+            .catch { e ->
+                emit(Error(error = "Couldn't read local data: ${e.message}"))
+            }
+    }
+
+    override suspend fun getAllModelsFromRemote(remoteId: Int): Flow<Resource<Int>> = flow {
+        emit(Loading())
+        val response = api.getModelsForMake(remoteId)
+        if (!response.isSuccessful) {
+            emit(Error(error = "Server error (HTTP ${response.code()})"))
+            return@flow
+        }
+        val models = response.body()?.models.orEmpty()
+        if (models.isEmpty()) {
+            emit(Success(0))
+            return@flow
+        }
+        val rowIds = dao.insertAllModels(models.map { it.toEntity() })
+        emit(Success(rowIds.size))
+    }.catch { e ->
+        emit(Error(error = "Failed to refresh: ${e.message}"))
     }
 
 }

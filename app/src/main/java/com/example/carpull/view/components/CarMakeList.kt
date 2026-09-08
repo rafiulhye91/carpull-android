@@ -11,6 +11,7 @@ import com.example.carpull.presentation.model.CarMake
 @Composable
 fun CarMakeList(
     carMakes: List<CarMake>,
+    onMakeClick: (CarMake) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: CarMakeViewModel,
 ) {
@@ -21,7 +22,7 @@ fun CarMakeList(
         ) { carMake ->
             SwipeableRowItem(
                 carMake = carMake,
-                onClick = {},
+                onClick = { onMakeClick(carMake) },
                 onEdit = {viewModel.onItemEdit(carMake)},
                 onDelete = {viewModel.onItemDelete(carMake)},
             )

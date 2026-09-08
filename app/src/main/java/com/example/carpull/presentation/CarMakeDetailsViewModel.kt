@@ -1,10 +1,13 @@
 package com.example.carpull.presentation
 
 import android.util.Log
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.navigation.toRoute
 import com.example.carpull.data.Resource
 import com.example.carpull.presentation.model.CarMake
+import com.example.carpull.presentation.model.CarModel
 import com.example.carpull.repositories.ICarPullRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -12,14 +15,16 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-interface ICarMakeViewModel {
-    fun onItemEdit(carMake: CarMake)
-    fun onItemDelete(carMake: CarMake)
+interface ICarMakeDetailsViewModel {
 }
 
 @HiltViewModel
-class CarMakeViewModel @Inject constructor(private val repository: ICarPullRepository) :
-    ICarMakeViewModel, ViewModel() {
+class CarMakeDetailsViewModel @Inject constructor(
+    private val repository: ICarPullRepository,
+    savedStateHandle: SavedStateHandle,
+) : ICarMakeDetailsViewModel, ViewModel() {
+
+    val carMake: CarMake = savedStateHandle.toRoute<CarMake>()
 
     private val _loadingState = MutableStateFlow(false)
     val loadingState = _loadingState.asStateFlow()
@@ -27,16 +32,22 @@ class CarMakeViewModel @Inject constructor(private val repository: ICarPullRepos
     private val _errorState = MutableStateFlow<String?>(null)
     val errorState = _errorState.asStateFlow()
 
-    private val _carMakes = MutableStateFlow<List<CarMake>>(emptyList())
-    val carMakes = _carMakes.asStateFlow()
+    private val _carModels = MutableStateFlow<List<CarModel>>(emptyList())
+    val carModels = _carModels.asStateFlow()
+
+    private var hasRequestedRefresh = false
 
     init {
-        getAllMakes()
+        if (carMake.remoteId == null) {
+            _errorState.value = "${carMake.name} has no remote id to look up"
+        } else {
+            getAllModels(carMake.remoteId)
+        }
     }
 
-    private fun getAllMakes() {
+    private fun getAllModels(remoteId: Int) {
         viewModelScope.launch {
-            repository.getAllMakesFromLocal().collect { resource ->
+            repository.getAllModelsFromLocal(remoteId).collect { resource ->
                 when (resource) {
                     is Resource.Error -> {
                         _loadingState.value = false
@@ -51,22 +62,23 @@ class CarMakeViewModel @Inject constructor(private val repository: ICarPullRepos
                     is Resource.Success -> {
                         _loadingState.value = false
                         _errorState.value = null
-                        val makes = resource.data.orEmpty()
-                        if (makes.isNullOrEmpty()) {
-                            refreshAllMakes()
+                        val models = resource.data.orEmpty()
+                        if (models.isEmpty() && !hasRequestedRefresh) {
+                            hasRequestedRefresh = true
+                            refreshAllModels(remoteId)
                             return@collect
                         }
-                        _carMakes.value = makes
+                        _carModels.value = models
+                        Log.d("rafi", "getAllModels: ${resource.data}")
                     }
                 }
             }
-
         }
     }
 
-    private fun refreshAllMakes() {
+    private fun refreshAllModels(remoteId: Int) {
         viewModelScope.launch {
-            repository.getAllMakesFromRemote().collect { resource ->
+            repository.getAllModelsFromRemote(remoteId).collect { resource ->
                 when (resource) {
                     is Resource.Error -> {
                         _loadingState.value = false
@@ -81,20 +93,10 @@ class CarMakeViewModel @Inject constructor(private val repository: ICarPullRepos
                     is Resource.Success -> {
                         _loadingState.value = false
                         _errorState.value = null
+                        Log.d("rafi", "refreshAllModels: ${resource.data}")
                     }
                 }
             }
         }
     }
-
-    override fun onItemEdit(carMake: CarMake) {
-        Log.d("CarMakeViewModel", "onItemEdit: $carMake")
-    }
-
-    override fun onItemDelete(carMake: CarMake) {
-        viewModelScope.launch {
-            repository.deleteCarMake(carMake)
-        }
-    }
-
 }
